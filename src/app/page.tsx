@@ -125,14 +125,13 @@ export default function Home() {
 
   const createProduct = async () => {
     let data = new FormData();
-    let imagedata = document.querySelector('input[type="file"]').files[0];
-    data.append("photo", imagedata);
+    data.append('name', product.name);
+    data.append('price', String(product.price));
 
-    Object.keys(product).forEach(key => {
-      if (key !== "id") {
-        data.append(key, product[key]);
-      }
-    });
+    let imagedata = (document.getElementById('photo') as HTMLInputElement)?.files?.[0];
+    if (imagedata) {
+      data.append("photo", imagedata);
+    }
 
     const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "products", {
       method: "POST",
