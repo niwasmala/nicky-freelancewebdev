@@ -124,16 +124,21 @@ export default function Home() {
   }
 
   const createProduct = async () => {
-    const {id, ...data} = product;
+    let data = new FormData();
+    let imagedata = document.querySelector('input[type="file"]').files[0];
+    data.append("photo", imagedata);
+
+    Object.keys(product).forEach(key => {
+      if (key !== "id") {
+        data.append(key, product[key]);
+      }
+    });
 
     const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "products", {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data),
+      method: "POST",
+      body: data,
     });
+
     const result = await response.json();
 
     setProduct({
@@ -192,8 +197,8 @@ export default function Home() {
       <div className="bg-blue-400 text-white w-full">
         <div className="max-w-5xl mx-auto py-3 flex flex-row gap-2">
           <div>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
             </svg>
           </div>
           <div className="">
@@ -253,6 +258,9 @@ export default function Home() {
                             </td>
                             <td className="p-2">
                               <div className="w-24 h-16 bg-gray-200">
+                                {item.photo && (
+                                  <img src={item.photo} alt={item.name} className="w-full h-full object-cover" />
+                                )}
                               </div>
                             </td>
                             <td className="p-2">
@@ -287,7 +295,7 @@ export default function Home() {
                     <label className="text-sm text-gray-600">
                       Foto Menu
                     </label>
-                    <input type="file" id="photo" name="photo" className="px-4 py-2 h-12 border-gray-200 border" />
+                    <input type="file" id="photo" name="photo" accept="image/*" className="px-4 py-2 h-12 border-gray-200 border" />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-sm text-gray-600">
@@ -312,8 +320,10 @@ export default function Home() {
                 {products.map((item: ProductInterface, index: number) => {
                   return (
                     <div key={index} onClick={() => addToCart(item)} className="cursor-pointer flex flex-col shadow-md bg-white w-full">                
-                      <div className="w-full h-32 bg-gray-100">
-                        
+                      <div className="w-full h-32 bg-gray-200">
+                        {item.photo && (
+                          <img src={item.photo} alt={item.name} className="w-full h-full object-cover" />
+                        )}
                       </div>
                       <div className="p-3 text-center">
                         <div className="text-black text-sm font-semibold">
@@ -337,8 +347,8 @@ export default function Home() {
                 <div id="bill">
                   <div className="flex justify-center gap-3">
                     <div>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
                       </svg>
                     </div>
                     <div className="text-lg font-semibold">
@@ -356,7 +366,9 @@ export default function Home() {
                       return (
                         <div key={index} className="flex flex-row gap-2 items-center">
                           <div className="w-24 h-16 bg-gray-100">
-
+                            {item.photo && (
+                              <img src={item.photo} alt={item.name} className="w-full h-full object-cover" />
+                            )}
                           </div>
                           <div className="flex-1 text-black text-sm font-semibold">
                             {item.name}
@@ -467,6 +479,9 @@ export default function Home() {
                           </td>
                           <td className="p-2">
                             <div className="w-24 h-16 bg-gray-200">
+                              {item.photo && (
+                                <img src={item.photo} alt={item.name} className="w-full h-full object-cover" />
+                              )}
                             </div>
                           </td>
                           <td className="p-2">
