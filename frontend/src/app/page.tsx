@@ -244,7 +244,7 @@ export default function Home() {
                     <tbody className="bg-gray-100 text-gray-900 text-sm">
                       {products.map((item: ProductInterface, index: number) => {
                         return (
-                          <tr>
+                          <tr key={index}>
                             <td className="p-2">
                               {index+1}
                             </td>
@@ -309,9 +309,9 @@ export default function Home() {
           <div className="flex flex-row gap-4">
             <div className="flex-1">
               <div className="grow grid grid-cols-3 gap-4">
-                {products.map((item: ProductInterface) => {
+                {products.map((item: ProductInterface, index: number) => {
                   return (
-                    <div onClick={() => addToCart(item)} className="cursor-pointer flex flex-col shadow-md bg-white w-full">                
+                    <div key={index} onClick={() => addToCart(item)} className="cursor-pointer flex flex-col shadow-md bg-white w-full">                
                       <div className="w-full h-32 bg-gray-100">
                         
                       </div>
@@ -352,9 +352,9 @@ export default function Home() {
                       </div>
                     )}
 
-                    {cart.map((item: CartInterface) => {
+                    {cart.map((item: CartInterface, index: number) => {
                       return (
-                        <div className="flex flex-row gap-2 items-center">
+                        <div key={index} className="flex flex-row gap-2 items-center">
                           <div className="w-24 h-16 bg-gray-100">
 
                           </div>
@@ -457,7 +457,7 @@ export default function Home() {
                   <tbody className="bg-gray-100 text-gray-900 text-sm">
                     {cart.map((item, index) => {
                       return (
-                        <tr>
+                        <tr key={index}>
                           <td className="p-2">
                             {index+1}
                           </td>
