@@ -3,12 +3,48 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 
+interface ProductInterface {
+  id?: number;
+  name: string;
+  photo?: string;
+  price: number;  
+}
+
+interface CartInterface extends ProductInterface {
+  quantity: number;
+}
+
+interface OrderInterface {
+  id?: number;
+  order_number?: number;
+  total_price: number;
+  buyer_money: number;
+  change_money: number;
+}
+
+interface OrderItemInterface {
+  id?: number;
+  product_id: number;
+  name: string;
+  photo?: string;
+  price: number;
+  quantity: number;
+  total_price: number;
+}
+
 export default function Home() {
-  const [ tab, setTab ] = useState<string>('food');
+  const [ tab, setTab ] = useState<string>('transaction');
   const [ subtab, setSubTab ] = useState<string>('list');
 
   const [ modalCharge, setModalCharge ] = useState<boolean>(false);
   const [ modalBill, setModalBill ] = useState<boolean>(false);
+  const [ modalOrder, setModalOrder ] = useState<boolean>(false);
+
+  const [ products, setProducts ] = useState<ProductInterface[]>([] as ProductInterface[]);
+  const [ cart, setCart ] = useState<CartInterface[]>([] as CartInterface[]);
+  const [ buyerMoney, setBuyerMoney ] = useState<number>(0 as number);
+  const [ product, setProduct ] = useState<ProductInterface>({name: '', price: null} as ProductInterface);
+  const [ orderNumber, setOrderNumber ] = useState<string>("");
 
   useEffect(() => {
     if (modalCharge) {
@@ -17,6 +53,18 @@ export default function Home() {
       document.body.style.overflow = "auto"
     }
   }, [ modalCharge ]);
+
+  const loadBill = () => {
+    const localCart = (JSON.parse(localStorage.getItem('alan-resto-cart')) ?? []) as CartInterface[];
+
+    setCart(localCart);
+  }
+
+  const saveBill = () => {
+    localStorage.setItem('alan-resto-cart', JSON.stringify(cart));
+
+    setModalBill(true);
+  }
 
   const printBill = () => {
     var mywindow = window.open('', 'PRINT', 'height=600,width=400');
@@ -36,6 +84,108 @@ export default function Home() {
 
     return true;
   };
+
+  const clearCart = () => {
+    setCart([] as CartInterface[]);
+    localStorage.setItem('alan-resto-cart', JSON.stringify([]));
+  }
+
+  useEffect(() => {
+    loadBill();
+  }, []);
+
+  const addToCart = (item: ProductInterface) => {
+    let isExist = false;
+    let newCart = [...cart];
+
+    newCart.forEach((cartItem: CartInterface, index: number) => {
+      if (cartItem.id === item.id) {
+        isExist = true;
+
+        newCart[index].quantity += 1;
+      }
+    });
+
+    if (!isExist) {
+      newCart.push({
+        ...item,
+        quantity: 1,
+      });
+    }
+
+    setCart(newCart);
+  }
+
+  const fetchProducts = async () => {
+    const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "products");
+    const products = await response.json();
+    
+    setProducts(products);
+  }
+
+  const createProduct = async () => {
+    const {id, ...data} = product;
+
+    const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "products", {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+
+    setProduct({
+      id: null,
+      name: '',
+      photo: null,
+      price: 0,
+    });
+
+    setSubTab('list');
+
+    fetchProducts();
+  }
+
+  const createOrder = async () => {
+    const total_price = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    const buyer_money = parseInt(buyerMoney);
+
+    const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "orders", {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        total_price,
+        buyer_money,
+        change_money: buyer_money - total_price,
+        items: cart.map(item => {
+          return {
+            product_id: item.id,
+            name: item.name,
+            photo: item.photo,
+            price: item.price,
+            quantity: item.quantity,
+            total_price: item.quantity * item.price,
+          } as OrderItemInterface;
+        }),
+      }),
+    });
+    const result = await response.json();
+
+    setBuyerMoney(0);
+    setModalCharge(false);
+    setModalOrder(true);
+    setOrderNumber(result.order_number);
+    clearCart();
+  }
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   return (
     <main>
@@ -92,21 +242,25 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody className="bg-gray-100 text-gray-900 text-sm">
-                      {[...Array(4).keys()].map(() => {
+                      {products.map((item: ProductInterface, index: number) => {
                         return (
                           <tr>
                             <td className="p-2">
-                              1
+                              {index+1}
                             </td>
                             <td className="p-2">
-                              Nama
+                              {item.name}
                             </td>
                             <td className="p-2">
                               <div className="w-24 h-16 bg-gray-200">
                               </div>
                             </td>
                             <td className="p-2">
-                              Harga
+                              {new Intl.NumberFormat("id-ID", {
+                                currency: "IDR",
+                                style: "currency",
+                                minimumFractionDigits: 0,
+                              }).format(item.price)}
                             </td>
                           </tr>
                         )
@@ -127,7 +281,7 @@ export default function Home() {
                     <label for="name" className="text-sm text-gray-600">
                       Nama Menu
                     </label>
-                    <input type="text" id="name" name="name" className="px-4 py-2 h-12 border-gray-200 border" />
+                    <input value={product.name} onChange={(e) => setProduct({...product, name: e.target.value})} type="text" id="name" name="name" className="px-4 py-2 h-12 border-gray-200 border" />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label for="photo" className="text-sm text-gray-600">
@@ -139,11 +293,11 @@ export default function Home() {
                     <label for="price" className="text-sm text-gray-600">
                       Harga Menu
                     </label>
-                    <input type="text" id="price" name="price" className="px-4 py-2 h-12 border-gray-200 border" />
+                    <input value={product.price} onChange={(e) => setProduct({...product, price: e.target.value})} type="text" id="price" name="price" className="px-4 py-2 h-12 border-gray-200 border" />
                   </div>
                 </div>  
                 <div className="flex flex-row-reverse">
-                  <button className="bg-green-700 text-white py-2 px-4">
+                  <button onClick={() => createProduct()} className="bg-green-700 text-white py-2 px-4">
                     Simpan
                   </button>
                 </div>
@@ -153,24 +307,30 @@ export default function Home() {
         )}
         {tab === 'transaction' && (
           <div className="flex flex-row gap-4">
-            <div className="grow grid grid-cols-3 gap-4">
-              {[...Array(10).keys()].map(() => {
-                return (
-                  <div className="flex flex-col shadow-md bg-white w-full">                
-                    <div className="w-full h-32 bg-gray-100">
-                      
-                    </div>
-                    <div className="p-3 text-center">
-                      <div className="text-black text-sm font-semibold">
-                        Sate Ayam
+            <div className="flex-1">
+              <div className="grow grid grid-cols-3 gap-4">
+                {products.map((item: ProductInterface) => {
+                  return (
+                    <div onClick={() => addToCart(item)} className="cursor-pointer flex flex-col shadow-md bg-white w-full">                
+                      <div className="w-full h-32 bg-gray-100">
+                        
                       </div>
-                      <div className="text-blue-400 text-sm font-semibold">
-                        Rp. 30.000
+                      <div className="p-3 text-center">
+                        <div className="text-black text-sm font-semibold">
+                          {item.name}
+                        </div>
+                        <div className="text-blue-400 text-sm font-semibold">
+                          {new Intl.NumberFormat("id-ID", {
+                            currency: "IDR",
+                            style: "currency",
+                            minimumFractionDigits: 0,
+                          }).format(item.price)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
             <div className="w-96">
               <div className="bg-white shadow-md p-4">
@@ -186,20 +346,30 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-4 py-8">
-                    {[...Array(4).keys()].map(() => {
+                    {cart.length === 0 && (
+                      <div>
+                        Belum ada pesanan. Silahkan tambah produk.
+                      </div>
+                    )}
+
+                    {cart.map((item: CartInterface) => {
                       return (
                         <div className="flex flex-row gap-2 items-center">
                           <div className="w-24 h-16 bg-gray-100">
 
                           </div>
                           <div className="flex-1 text-black text-sm font-semibold">
-                            Sate Ayam
+                            {item.name}
                           </div>
                           <div className="text-black text-sm font-semibold">
-                            x 1
+                            x {item.quantity}
                           </div>
                           <div className="text-blue-400 text-sm font-semibold">
-                            Rp. 30.000
+                            {new Intl.NumberFormat("id-ID", {
+                              currency: "IDR",
+                              style: "currency",
+                              minimumFractionDigits: 0,
+                            }).format(item.quantity * item.price)}
                           </div>
                         </div>
                       )
@@ -207,17 +377,24 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <button className="col-span-2 text-red-500 border-red-500 border-2 bg-white text-center py-1 font-semibold">
+                  <button onClick={() => clearCart()} className="col-span-2 text-red-500 border-red-500 border-2 bg-white text-center py-1 font-semibold">
                     Clear Cart
                   </button>
-                  <button onClick={() => setModalBill(true)} className="text-white bg-green-700 text-center py-1 shadow-sm">
+                  <button onClick={() => saveBill()} className="text-white bg-green-700 text-center py-1 shadow-sm">
                     Save Bill
                   </button>
                   <button onClick={() => printBill()} className="text-white bg-green-700 text-center py-1 shadow-sm">
                     Print Bill
                   </button>
                   <button onClick={() => setModalCharge(true)} className="col-span-2 text-white bg-blue-400 text-center py-2">
-                    Charge Rp 40.000
+                    Charge &nbsp;
+                    {
+                      new Intl.NumberFormat("id-ID", {
+                        currency: "IDR",
+                        style: "currency",
+                        minimumFractionDigits: 0,
+                      }).format(cart.reduce((sum, item) => sum + (item.quantity * item.price), 0))
+                    }
                   </button>
                 </div>
               </div>
@@ -230,9 +407,22 @@ export default function Home() {
         <div className="fixed top-0 left-0 right-0 bottom-0 z-20 bg-gray-900/50 w-screen h-screen flex justify-center items-center">
           <div className="bg-white w-4/6 p-8 flex flex-row gap-4">
             <div className="flex-1 font-semibold text-xl">
-              Pesanan Berhasil Disimpan
+              Pesanan Disimpan
             </div>
             <button onClick={() => setModalBill(false)} className="border-gray-200 border-2 py-2 px-4 text-sm">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {modalOrder && (
+        <div className="fixed top-0 left-0 right-0 bottom-0 z-20 bg-gray-900/50 w-screen h-screen flex justify-center items-center">
+          <div className="bg-white w-4/6 p-8 flex flex-row gap-4">
+            <div className="flex-1 font-semibold text-xl">
+              Transaksi #{orderNumber} Berhasil Disimpan
+            </div>
+            <button onClick={() => setModalOrder(false)} className="border-gray-200 border-2 py-2 px-4 text-sm">
               Close
             </button>
           </div>
@@ -265,21 +455,26 @@ export default function Home() {
                     </tr>
                   </thead>
                   <tbody className="bg-gray-100 text-gray-900 text-sm">
-                    {[...Array(4).keys()].map(() => {
+                    {cart.map((item, index) => {
                       return (
                         <tr>
                           <td className="p-2">
-                            1
+                            {index+1}
                           </td>
                           <td className="p-2">
-                            Nama
+                            {item.name} &nbsp;
+                            x {item.quantity}
                           </td>
                           <td className="p-2">
                             <div className="w-24 h-16 bg-gray-200">
                             </div>
                           </td>
                           <td className="p-2">
-                            Harga
+                            {new Intl.NumberFormat("id-ID", {
+                              currency: "IDR",
+                              style: "currency",
+                              minimumFractionDigits: 0,
+                            }).format(item.quantity * item.price)}
                           </td>
                         </tr>
                       )
@@ -295,19 +490,27 @@ export default function Home() {
                   Uang Pembeli (Rp)
                 </div>
                 <div>
-                  <input type="text" className="w-full bg-white p-2 border-gray-200 border-2 text-sm" />
+                  <input value={buyerMoney} onChange={(e) => setBuyerMoney(e.target.value)} type="text" className="w-full bg-white p-2 border-gray-200 border-2 text-sm" />
                 </div>
                 <div className="flex flex-row gap-2">
                   <button onClick={() => setModalCharge(false)} className="flex-1 border-gray-200 border-2 py-1 text-sm">
                     Close
                   </button>
-                  <button className="flex-1 bg-blue-400 text-white py-1 text-sm">
+                  <button onClick={() => createOrder()} className="flex-1 bg-blue-400 text-white py-1 text-sm">
                     Pay!
                   </button>
                 </div>
-                <div className="text-red-500">
-                  Kembalian: Rp 20.000
-                </div>
+                {buyerMoney > 0 && cart.reduce((sum, item) => sum + (item.quantity * item.price), 0) > 0 && (
+                  <div className="text-red-500">
+                    Kembalian: &nbsp;
+
+                    {new Intl.NumberFormat("id-ID", {
+                      currency: "IDR",
+                      style: "currency",
+                      minimumFractionDigits: 0,
+                    }).format(buyerMoney - cart.reduce((sum, item) => sum + (item.quantity * item.price), 0))}
+                  </div>
+                )}                
               </div>
             </div>
           </div>
