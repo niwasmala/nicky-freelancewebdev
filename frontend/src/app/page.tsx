@@ -69,18 +69,18 @@ export default function Home() {
   const printBill = () => {
     var mywindow = window.open('', 'PRINT', 'height=600,width=400');
 
-    mywindow.document.write('<html><head><title>' + document.title  + '</title>');
-    mywindow.document.write('<link rel="stylesheet" href="/_next/static/css/app/layout.css">');
-    mywindow.document.write('</head><body >');
-    mywindow.document.write('<h1>' + document.title  + '</h1>');
-    mywindow.document.write(document.getElementById("bill").innerHTML);
-    mywindow.document.write('</body></html>');
+    mywindow?.document.write('<html><head><title>' + document.title  + '</title>');
+    mywindow?.document.write('<link rel="stylesheet" href="/_next/static/css/app/layout.css">');
+    mywindow?.document.write('</head><body >');
+    mywindow?.document.write('<h1>' + document.title  + '</h1>');
+    mywindow?.document.write(document.getElementById("bill")?.innerHTML ?? "");
+    mywindow?.document.write('</body></html>');
 
-    mywindow.document.close();
-    mywindow.focus();
+    mywindow?.document.close();
+    mywindow?.focus();
 
-    mywindow.print();
-    // mywindow.close();
+    mywindow?.print();
+    // mywindow?.close();
 
     return true;
   };
@@ -137,9 +137,9 @@ export default function Home() {
     const result = await response.json();
 
     setProduct({
-      id: null,
+      id: undefined,
       name: '',
-      photo: null,
+      photo: undefined,
       price: 0,
     });
 
@@ -150,7 +150,7 @@ export default function Home() {
 
   const createOrder = async () => {
     const total_price = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-    const buyer_money = parseInt(buyerMoney);
+    const buyer_money = buyerMoney;
 
     const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "orders", {
       method: 'POST',
@@ -192,7 +192,7 @@ export default function Home() {
       <div className="bg-blue-400 text-white w-full">
         <div className="max-w-5xl mx-auto py-3 flex flex-row gap-2">
           <div>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
             </svg>
           </div>
@@ -278,22 +278,22 @@ export default function Home() {
                 </div>
                 <div className="flex flex-col gap-4 py-8">
                   <div className="flex flex-col gap-2">
-                    <label for="name" className="text-sm text-gray-600">
+                    <label className="text-sm text-gray-600">
                       Nama Menu
                     </label>
                     <input value={product.name} onChange={(e) => setProduct({...product, name: e.target.value})} type="text" id="name" name="name" className="px-4 py-2 h-12 border-gray-200 border" />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label for="photo" className="text-sm text-gray-600">
+                    <label className="text-sm text-gray-600">
                       Foto Menu
                     </label>
                     <input type="file" id="photo" name="photo" className="px-4 py-2 h-12 border-gray-200 border" />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label for="price" className="text-sm text-gray-600">
+                    <label className="text-sm text-gray-600">
                       Harga Menu
                     </label>
-                    <input value={product.price} onChange={(e) => setProduct({...product, price: e.target.value})} type="text" id="price" name="price" className="px-4 py-2 h-12 border-gray-200 border" />
+                    <input value={product.price} onChange={(e) => setProduct({...product, price: parseInt(e.target.value)})} type="text" id="price" name="price" className="px-4 py-2 h-12 border-gray-200 border" />
                   </div>
                 </div>  
                 <div className="flex flex-row-reverse">
@@ -337,7 +337,7 @@ export default function Home() {
                 <div id="bill">
                   <div className="flex justify-center gap-3">
                     <div>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
                       </svg>
                     </div>
@@ -490,7 +490,7 @@ export default function Home() {
                   Uang Pembeli (Rp)
                 </div>
                 <div>
-                  <input value={buyerMoney} onChange={(e) => setBuyerMoney(e.target.value)} type="text" className="w-full bg-white p-2 border-gray-200 border-2 text-sm" />
+                  <input value={buyerMoney} onChange={(e) => setBuyerMoney(parseInt(e.target.value))} type="text" className="w-full bg-white p-2 border-gray-200 border-2 text-sm" />
                 </div>
                 <div className="flex flex-row gap-2">
                   <button onClick={() => setModalCharge(false)} className="flex-1 border-gray-200 border-2 py-1 text-sm">
