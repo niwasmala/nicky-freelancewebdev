@@ -43,7 +43,7 @@ export default function Home() {
   const [ products, setProducts ] = useState<ProductInterface[]>([] as ProductInterface[]);
   const [ cart, setCart ] = useState<CartInterface[]>([] as CartInterface[]);
   const [ buyerMoney, setBuyerMoney ] = useState<number>(0 as number);
-  const [ product, setProduct ] = useState<ProductInterface>({name: '', price: null} as ProductInterface);
+  const [ product, setProduct ] = useState<ProductInterface>({name: '', price: 0} as ProductInterface);
   const [ orderNumber, setOrderNumber ] = useState<string>("");
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function Home() {
   }, [ modalCharge ]);
 
   const loadBill = () => {
-    const localCart = (JSON.parse(localStorage.getItem('alan-resto-cart')) ?? []) as CartInterface[];
+    const localCart = (JSON.parse(localStorage.getItem('alan-resto-cart') ?? '[]') ?? []) as CartInterface[];
 
     setCart(localCart);
   }
